@@ -1,5 +1,6 @@
 import { ClipboardCheck, Clock, PackageCheck, Search } from "lucide-react"
 import { Link, useNavigate } from "@tanstack/react-router"
+import { useState } from "react"
 import { useAuthStore } from "@/auth/authStore"
 import { Button } from "@/components/ui/button"
 import { buttonVariants } from "@/components/ui/button-variants"
@@ -7,14 +8,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState, ErrorState, PageHeader, StatCard, StatusBadge } from "@/components/common"
 import { cn } from "@/lib/utils"
-import { useMyDonations } from "@/features/donation"
+import { useAvailableDonations, useMyAcceptedDonations } from "@/features/donation"
+
+const EXPIRING_SOON_WINDOW_MS = 6 * 60 * 60 * 1000
 
 export function NgoDashboardPage() {
-  const donationsQuery = useMyDonations()
-  const donations = donationsQuery.data ?? []
-  const activeDonations = donations.filter((donation) => donation.status === "ACCEPTED" || donation.status === "DISPATCHED")
-  const completedDonations = donations.filter((donation) => donation.status === "COMPLETED")
-  const recentDonations = donations.slice(0, 5)
+  const availableDonationsQuery = useAvailableDonations()
+  const acceptedDonationsQuery = useMyAcceptedDonations()
+  const [loadedAt] = useState(() => Date.now())
+  const availableDonations = availableDonationsQuery.data ?? []
+  const acceptedDonations = acceptedDonationsQuery.data ?? []
+  const expiringDonations = availableDonations.filter((donation) => donation.expiryTime && new Date(donation.expiryTime).getTime() <= loadedAt + EXPIRING_SOON_WINDOW_MS)
+  const recentDonations = acceptedDonations.slice(0, 5)
+  const isLoading = availableDonationsQuery.isLoading || acceptedDonationsQuery.isLoading
+  const errorQuery = availableDonationsQuery.isError ? availableDonationsQuery : acceptedDonationsQuery.isError ? acceptedDonationsQuery : null
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
 
@@ -31,7 +38,7 @@ export function NgoDashboardPage() {
         }
       />
 
-      {donationsQuery.isLoading ? (
+      {isLoading ? (
         <div className="grid gap-4 md:grid-cols-3">
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
@@ -39,20 +46,23 @@ export function NgoDashboardPage() {
         </div>
       ) : null}
 
-      {donationsQuery.isError ? <ErrorState message={donationsQuery.error.message} onRetry={() => void donationsQuery.refetch()} /> : null}
+      {errorQuery ? <ErrorState message={errorQuery.error.message} onRetry={() => {
+        void availableDonationsQuery.refetch()
+        void acceptedDonationsQuery.refetch()
+      }} /> : null}
 
-      {!donationsQuery.isLoading && !donationsQuery.isError ? (
+      {!isLoading && !errorQuery ? (
         <>
           <div className="grid gap-4 md:grid-cols-3">
-            <StatCard title="Total Accepted" value={donations.length} description="All donations you've ever accepted" icon={<ClipboardCheck className="size-5" />} />
-            <StatCard title="Active Collections" value={activeDonations.length} description="Food currently being collected" icon={<Clock className="size-5" />} />
-            <StatCard title="Successful Deliveries" value={completedDonations.length} description="Food distributed successfully" icon={<PackageCheck className="size-5" />} />
+            <StatCard title="Available Donations" value={availableDonations.length} description="Food currently open for NGO collection" icon={<ClipboardCheck className="size-5" />} />
+            <StatCard title="Accepted Donations" value={acceptedDonations.length} description="Collections assigned to your NGO" icon={<Clock className="size-5" />} />
+            <StatCard title="Expiring Soon" value={expiringDonations.length} description="Available food expiring within 6 hours" icon={<PackageCheck className="size-5" />} />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
+                <CardTitle>Recent Accepted Donations</CardTitle>
               </CardHeader>
               <CardContent>
                 {recentDonations.length ? (
@@ -71,7 +81,7 @@ export function NgoDashboardPage() {
                   </div>
                 ) : (
                   <EmptyState
-                    title="No activity yet"
+                    title="No accepted donations yet"
                     description="Browse available donations and accept them to start making an impact."
                     action={<Button onClick={() => navigate({ to: "/ngo/donations/browse" })}>Browse Food</Button>}
                   />

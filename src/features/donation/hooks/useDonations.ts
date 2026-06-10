@@ -9,6 +9,7 @@ import {
   deleteDonation,
   getAvailableDonations,
   getDonationById,
+  getMyAcceptedDonations,
   getMyDonations,
   updateDonation,
 } from "../api/donationApi"
@@ -24,6 +25,13 @@ export function useAvailableDonations() {
   return useQuery({
     queryKey: queryKeys.donations.available,
     queryFn: getAvailableDonations,
+  })
+}
+
+export function useMyAcceptedDonations() {
+  return useQuery({
+    queryKey: queryKeys.donations.accepted,
+    queryFn: getMyAcceptedDonations,
   })
 }
 

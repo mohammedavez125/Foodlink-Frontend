@@ -1,6 +1,6 @@
 import axios from "axios"
 import { toast } from "sonner"
-import { useAuthStore } from "@/auth/authStore"
+import { getAuthSnapshot, useAuthStore } from "@/auth/authStore"
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080",
@@ -8,25 +8,7 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   console.log("Axios: Request starting...", { url: config.url })
-  // Try to get token from Zustand store
-  let token = useAuthStore.getState().token
-
-  // Fallback: If store is not yet hydrated or token is null, check localStorage directly
-  // This is crucial for the very first request after a page reload or login
-  if (!token) {
-    try {
-      const stored = localStorage.getItem("foodlink-auth")
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        token = parsed.state?.token
-        if (token) {
-          console.log("Axios: Found token in localStorage fallback")
-        }
-      }
-    } catch (e) {
-      console.error("Failed to parse auth storage", e)
-    }
-  }
+  const { token } = getAuthSnapshot()
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`

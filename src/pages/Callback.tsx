@@ -1,6 +1,16 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuthStore } from "@/auth/authStore";
+import { getRoleNameFromValue } from "@/auth/roles";
+import type { Role } from "@/types/auth";
+
+function parseRoleParam(roleParam: string): unknown {
+    try {
+        return JSON.parse(decodeURIComponent(roleParam));
+    } catch {
+        return decodeURIComponent(roleParam);
+    }
+}
 
 export function OAuthCallback() {
     const navigate = useNavigate();
@@ -35,16 +45,16 @@ export function OAuthCallback() {
                 role 
             });
             try {
-                const parsedRole = JSON.parse(decodeURIComponent(role));
+                const parsedRole = parseRoleParam(role);
                 console.log("OAuthCallback: Decoded role", parsedRole);
                 
                 login(token, {
                     username,
                     email,
-                    role: parsedRole,
+                    role: parsedRole as Role,
                 });
 
-                const roleName = parsedRole?.roleName ?? parsedRole?.name;
+                const roleName = getRoleNameFromValue(parsedRole);
                 
                 // Use a micro-tick to ensure state is committed before navigation
                 setTimeout(() => {

@@ -9,7 +9,6 @@ import {
     Utensils,
     ArrowRight,
     Users,
-    ChevronRight,
     CheckCircle2
 } from "lucide-react";
 

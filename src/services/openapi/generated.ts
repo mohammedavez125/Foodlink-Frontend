@@ -77,6 +77,7 @@ export interface DonationResponse {
   quantity?: number
   description?: string
   pickupLocation?: PickupLocation
+  expiryTime?: string
   dropLocation?: DropLocation
   status?: DonationStatus
   estimatedMinutes?: number

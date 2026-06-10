@@ -7,11 +7,79 @@ import {
   Field, FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { useNavigate } from "@tanstack/react-router"
 import { useAuthStore } from "@/auth/authStore"
+import { getRoleNameFromValue } from "@/auth/roles"
+import type { Role, User } from "@/types/auth"
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null
+}
+
+function getString(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value
+    }
+  }
+
+  return null
+}
+
+function findAuthPayload(value: unknown): Record<string, unknown> {
+  const record = asRecord(value)
+  if (!record) return {}
+
+  if (
+    getString(record.token, record.accessToken, record.jwtToken, record.jwt, record.access_token, record.bearerToken)
+  ) {
+    return record
+  }
+
+  return asRecord(record.data) ?? asRecord(record.payload) ?? asRecord(record.response) ?? record
+}
+
+function parseLoginResponse(data: unknown, fallbackUsername: string): { token: string; user: User } {
+  const payload = findAuthPayload(data)
+  const nestedUser = asRecord(payload.user)
+  const token = getString(
+    payload.token,
+    payload.accessToken,
+    payload.jwtToken,
+    payload.jwt,
+    payload.access_token,
+    payload.bearerToken,
+  )
+  const role = payload.role ?? nestedUser?.role ?? payload.roleName ?? payload.authority
+  const roleName = getRoleNameFromValue(role)
+
+  if (!token) {
+    throw new Error("Login response did not include an auth token")
+  }
+
+  if (!roleName) {
+    throw new Error("Login response did not include a valid role")
+  }
+
+  return {
+    token,
+    user: {
+      username: getString(payload.username, nestedUser?.username) ?? fallbackUsername,
+      email: getString(payload.email, nestedUser?.email) ?? "",
+      role: role as User["role"],
+    },
+  }
+}
+
+function parseRoleParam(roleParam: string): unknown {
+  try {
+    return JSON.parse(decodeURIComponent(roleParam))
+  } catch {
+    return decodeURIComponent(roleParam)
+  }
+}
 
 
 export function LoginForm({
@@ -59,19 +127,15 @@ export function LoginForm({
         throw new Error(data.message || "Login failed")
       }
 
-      const user = {
-        username: data.username,
-        email: data.email,
-        role: data.role
-      }
+      const { token, user } = parseLoginResponse(data, username)
       console.log("LoginForm: Login successful, user data:", user)
-      login(data.token, user)
+      login(token, user)
       
       setSuccess("Login successful!")
       // Allow a tiny tick for Zustand to write to localStorage if needed
       setTimeout(async () => {
         try {
-          const roleName = user.role?.roleName ?? user.role?.name
+          const roleName = getRoleNameFromValue(user.role)
           console.log("LoginForm: Redirecting to dashboard for role:", roleName)
           if (roleName === "NGO") {
             await navigate({ to: "/ngo/dashboard" })
@@ -131,20 +195,18 @@ export function LoginForm({
         roleParam 
       });
       try {
-        const role = JSON.parse(
-            decodeURIComponent(roleParam)
-        );
+        const role = parseRoleParam(roleParam);
         console.log("LoginForm: Decoded OIDC role", role);
 
         login(token, {
           username,
           email,
-          role,
+          role: role as Role,
         });
 
         // Small delay for OIDC callback as well
         setTimeout(() => {
-          const roleName = role?.roleName ?? role?.name
+          const roleName = getRoleNameFromValue(role)
           if (roleName === "NGO") {
             navigate({ to: "/ngo/dashboard" })
           } else if (roleName === "DONOR") {

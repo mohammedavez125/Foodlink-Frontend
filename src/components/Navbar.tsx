@@ -1,11 +1,13 @@
 import { Link } from "@tanstack/react-router"
 import { useAuthStore } from "@/auth/authStore"
+import { getRoleNameFromValue } from "@/auth/roles"
 import { LogoutButton } from "@/components/LogoutButton.tsx"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
 
 export function Navbar() {
   const user = useAuthStore((s) => s.user)
+  const dashboardPath = getRoleNameFromValue(user?.role) === "NGO" ? "/ngo/dashboard" : "/donor/dashboard"
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md">
@@ -57,11 +59,7 @@ export function Navbar() {
           ) : (
             <div className="flex items-center gap-4">
               <Link
-                to={
-                  user.role?.roleName === "NGO" || user.role?.name === "NGO"
-                    ? "/ngo/dashboard"
-                    : "/donor/dashboard"
-                }
+                to={dashboardPath}
               >
                 <Button
                   variant="outline"

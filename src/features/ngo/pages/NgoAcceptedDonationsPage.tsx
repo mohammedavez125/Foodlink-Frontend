@@ -1,15 +1,15 @@
-import { MapPin, Package, Calendar, Info } from "lucide-react"
+import { MapPin, Calendar, Info } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState, ErrorState, PageHeader, StatusBadge } from "@/components/common"
-import { useMyDonations } from "@/features/donation"
+import { useMyAcceptedDonations } from "@/features/donation"
 import { format } from "date-fns"
 
 export function NgoAcceptedDonationsPage() {
   const navigate = useNavigate()
-  const donationsQuery = useMyDonations()
+  const donationsQuery = useMyAcceptedDonations()
   const donations = donationsQuery.data ?? []
 
   return (

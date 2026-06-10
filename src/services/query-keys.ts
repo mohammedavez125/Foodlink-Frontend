@@ -3,6 +3,7 @@ export const queryKeys = {
     all: ["donations"] as const,
     mine: ["donations", "mine"] as const,
     available: ["donations", "available"] as const,
+    accepted: ["donations", "accepted"] as const,
     detail: (id: string) => ["donations", "detail", id] as const,
   },
   donorProfile: ["donor", "profile"] as const,

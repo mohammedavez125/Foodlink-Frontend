@@ -7,21 +7,10 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { useNavigate } from "@tanstack/react-router"
-
-interface SignupFormData {
-  email: string
-  username: string
-  firstname: string
-  lastname: string
-  password: string
-  phone: string
-  address: string
-}
 
 export function SignupForm({
                              className,

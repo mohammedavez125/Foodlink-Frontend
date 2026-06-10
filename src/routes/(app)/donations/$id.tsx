@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createFileRoute } from "@tanstack/react-router"
 import { requireAuth } from "@/auth/requireAuth"
-import { useAuthStore } from "@/auth/authStore"
 import { getRoleName } from "@/auth/roles"
 import { DonorLayout, NgoLayout } from "@/components/layout"
 import { DonationDetailsPage } from "@/features/donation/pages/DonationDetailsPage"
