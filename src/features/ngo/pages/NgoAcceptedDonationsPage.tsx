@@ -1,15 +1,21 @@
-import { MapPin, Calendar, Info } from "lucide-react"
+import { useState } from "react"
+import { MapPin, Calendar, Info, PackageCheck, CheckCircle2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { EmptyState, ErrorState, PageHeader, StatusBadge } from "@/components/common"
-import { useMyAcceptedDonations } from "@/features/donation"
+import { ConfirmActionDialog, EmptyState, ErrorState, PageHeader, StatusBadge } from "@/components/common"
+import { useCompleteDonation, useMyAcceptedDonations, useReceiveDonation } from "@/features/donation"
+import type { DonationResponse } from "@/services/openapi/generated"
 import { format } from "date-fns"
 
 export function NgoAcceptedDonationsPage() {
   const navigate = useNavigate()
   const donationsQuery = useMyAcceptedDonations()
+  const receiveDonation = useReceiveDonation()
+  const completeDonation = useCompleteDonation()
+  const [receiveTarget, setReceiveTarget] = useState<DonationResponse | null>(null)
+  const [completeTarget, setCompleteTarget] = useState<DonationResponse | null>(null)
   const donations = donationsQuery.data ?? []
 
   return (
@@ -72,17 +78,58 @@ export function NgoAcceptedDonationsPage() {
                           </div>
                         </div>
                       )}
+                      {donation.dropLocation?.addressLine ? (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                          <div className="flex flex-col">
+                            <span className="font-medium">Drop Location</span>
+                            <span className="line-clamp-2 text-muted-foreground">
+                              {donation.dropLocation.addressLine}, {donation.dropLocation.city}
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   </CardContent>
-                  <CardFooter className="border-t bg-muted/10 pt-4">
+                  <CardFooter className="grid gap-2 border-t bg-muted/10 pt-4 sm:grid-cols-2">
                     <Button 
-                      className="w-full gap-2"
+                      className="gap-2"
                       variant="outline"
                       onClick={() => navigate({ to: "/donations/$id", params: { id: donation.id! } })}
                     >
                       <Info className="size-4" />
                       View Details
                     </Button>
+                    {donation.status === "ACCEPTED" ? (
+                      <div className="flex items-center rounded-lg border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                        Waiting for donor to dispatch food
+                      </div>
+                    ) : null}
+                    {donation.status === "DISPATCHED" ? (
+                      <Button
+                        className="gap-2 bg-emerald-700 hover:bg-emerald-800"
+                        disabled={!donation.id || receiveDonation.isPending}
+                        onClick={() => setReceiveTarget(donation)}
+                      >
+                        <PackageCheck className="size-4" />
+                        Mark Received
+                      </Button>
+                    ) : null}
+                    {donation.status === "RECEIVED" ? (
+                      <Button
+                        className="gap-2 bg-emerald-700 hover:bg-emerald-800"
+                        disabled={!donation.id || completeDonation.isPending}
+                        onClick={() => setCompleteTarget(donation)}
+                      >
+                        <CheckCircle2 className="size-4" />
+                        Complete Donation
+                      </Button>
+                    ) : null}
+                    {donation.status === "COMPLETED" ? (
+                      <div className="flex items-center justify-center rounded-lg border bg-muted/40 px-3 py-2">
+                        <StatusBadge status="COMPLETED" />
+                      </div>
+                    ) : null}
                   </CardFooter>
                 </Card>
               ))}
@@ -96,6 +143,34 @@ export function NgoAcceptedDonationsPage() {
           )}
         </>
       ) : null}
+      <ConfirmActionDialog
+        open={Boolean(receiveTarget)}
+        title="Mark donation received?"
+        description="This confirms that your NGO has received the dispatched food."
+        confirmLabel="Mark Received"
+        isPending={receiveDonation.isPending}
+        onOpenChange={(open) => {
+          if (!open) setReceiveTarget(null)
+        }}
+        onConfirm={() => {
+          if (!receiveTarget?.id) return
+          receiveDonation.mutate(receiveTarget.id, { onSuccess: () => setReceiveTarget(null) })
+        }}
+      />
+      <ConfirmActionDialog
+        open={Boolean(completeTarget)}
+        title="Complete donation?"
+        description="This closes the donation workflow after the food has been received."
+        confirmLabel="Complete"
+        isPending={completeDonation.isPending}
+        onOpenChange={(open) => {
+          if (!open) setCompleteTarget(null)
+        }}
+        onConfirm={() => {
+          if (!completeTarget?.id) return
+          completeDonation.mutate(completeTarget.id, { onSuccess: () => setCompleteTarget(null) })
+        }}
+      />
     </div>
   )
 }

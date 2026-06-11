@@ -1,4 +1,4 @@
-import { ClipboardCheck, Clock, PackageCheck, PlusCircle } from "lucide-react"
+import { ClipboardCheck, Clock, PackageCheck, PlusCircle, Truck } from "lucide-react"
 import { Link, useNavigate } from "@tanstack/react-router"
 import { useAuthStore } from "@/auth/authStore"
 import { Button } from "@/components/ui/button"
@@ -7,14 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState, ErrorState, PageHeader, StatCard, StatusBadge } from "@/components/common"
 import { cn } from "@/lib/utils"
-import { useMyDonations } from "@/features/donation"
+import { useDonorHistory, useMyDonations } from "@/features/donation"
 
 export function DonorDashboardPage() {
   const navigate = useNavigate()
   const donationsQuery = useMyDonations()
+  const historyQuery = useDonorHistory()
   const donations = donationsQuery.data ?? []
-  const activeDonations = donations.filter((donation) => donation.status && !["COMPLETED", "CANCELLED", "EXPIRED"].includes(donation.status))
-  const completedDonations = donations.filter((donation) => donation.status === "COMPLETED")
+  const history = historyQuery.data ?? []
+  const availableDonations = donations.filter((donation) => donation.status === "AVAILABLE")
+  const acceptedDonations = donations.filter((donation) => donation.status === "ACCEPTED")
+  const dispatchedDonations = donations.filter((donation) => donation.status === "DISPATCHED")
   const recentDonations = donations.slice(0, 5)
   const user = useAuthStore((s) => s.user)
 
@@ -43,10 +46,11 @@ export function DonorDashboardPage() {
 
       {!donationsQuery.isLoading && !donationsQuery.isError ? (
         <>
-          <div className="grid gap-4 md:grid-cols-3">
-            <StatCard title="Total Donations" value={donations.length} description="All donations you have created" icon={<ClipboardCheck className="size-5" />} />
-            <StatCard title="Active Donations" value={activeDonations.length} description="Available, accepted, or in transit" icon={<Clock className="size-5" />} />
-            <StatCard title="Completed Donations" value={completedDonations.length} description="Successfully closed donations" icon={<PackageCheck className="size-5" />} />
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard title="Available" value={availableDonations.length} description="Editable donations waiting for NGOs" icon={<ClipboardCheck className="size-5" />} />
+            <StatCard title="Accepted" value={acceptedDonations.length} description="Accepted by NGOs, ready to dispatch" icon={<Clock className="size-5" />} />
+            <StatCard title="Dispatched" value={dispatchedDonations.length} description="Food currently in transit" icon={<Truck className="size-5" />} />
+            <StatCard title="Total Food Donations Completed" value={historyQuery.isLoading ? "..." : history.length} description="Completed donation history" icon={<PackageCheck className="size-5" />} />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">

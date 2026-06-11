@@ -10,7 +10,7 @@ export type DonationStatus =
   | "AVAILABLE"
   | "ACCEPTED"
   | "DISPATCHED"
-  | "DELIVERED"
+  | "RECEIVED"
   | "COMPLETED"
   | "EXPIRED"
   | "CANCELLED"
@@ -68,6 +68,10 @@ export interface UpdateDonationRequest {
   expiryTime?: string
 }
 
+export interface AcceptDonationRequest {
+  dropLocation: DropLocation
+}
+
 export interface DonationResponse {
   id?: string
   donorProfileId?: string
@@ -81,6 +85,10 @@ export interface DonationResponse {
   dropLocation?: DropLocation
   status?: DonationStatus
   estimatedMinutes?: number
+  acceptedAt?: string
+  dispatchedAt?: string
+  receivedAt?: string
+  completedAt?: string
 }
 
 export interface UpdateDonorProfileRequest {

@@ -1,960 +1,371 @@
-# FoodLink - Smart Food Donation & Redistribution Platform
+# FoodLink Frontend
 
-## Overview
+FoodLink Frontend is a React web app for the FoodLink food donation platform. It connects to the Spring Boot backend API for donor and NGO registration, JWT login, Google OAuth2 login, profile management, and the donation workflow from creation to completion.
 
-FoodLink is a web-based platform designed to reduce food wastage and support hunger alleviation by connecting:
+## Tech Stack
 
-- Donors (Restaurants, Hotels, Individuals)
-- NGOs
-- Delivery Partners
-
-The platform enables donors to post surplus food, NGOs to approve and manage donations, and delivery partners to collect and deliver food to beneficiaries.
-
----
-
-# Tech Stack
-
-## Frontend
-
-- React
+- React 19
 - TypeScript
-- React Router
+- Vite
+- TanStack Router
+- TanStack Query
 - Axios
-- React Query (TanStack Query)
 - Zustand
 - React Hook Form
 - Zod
-- Material UI / TailwindCSS
-- Socket.IO Client
+- Tailwind CSS
+- Base UI / local UI components
+- Sonner toast notifications
+- Lucide React icons
 
-## Backend
+## Backend Requirement
 
-- Spring Boot 3
-- Spring Security
-- JWT Authentication
-- Spring Data MongoDB
-- Lombok
-- Spring Validation
-- WebSocket (STOMP)
-- Swagger OpenAPI
+Run the FoodLink backend before using the frontend.
 
-## Database
-
-- MongoDB Atlas / Local MongoDB
-
----
-
-# User Roles
-
-## Donor
-
-Can:
-
-- Register/Login
-- Create Donations
-- View Donation Status
-- Track Deliveries
-- Submit Feedback
-
-## NGO
-
-Can:
-
-- View Donations
-- Approve Donations
-- Reject Donations
-- Assign Delivery Partners
-- Track Deliveries
-- View Analytics
-
-## Delivery Partner
-
-Can:
-
-- View Assigned Tasks
-- Accept Tasks
-- Mark Pickup Complete
-- Mark Delivery Complete
-
-## Admin
-
-Can:
-
-- Manage Users
-- Manage NGOs
-- View Platform Analytics
-
----
-
-# System Workflow
+Default backend URL:
 
 ```text
-Donor
-  |
-  v
-Create Donation
-  |
-  v
-Donation Status = PENDING
-  |
-  v
-NGO Reviews Donation
-  |
-  +--> APPROVE
-  |       |
-  |       v
-  |   Assign Delivery Partner
-  |       |
-  |       v
-  |   PICKED_UP
-  |       |
-  |       v
-  |   DELIVERED
-  |
-  +--> REJECT
+http://localhost:8080
 ```
 
----
-
-# Project Structure
-
-## Frontend
+The backend CORS configuration should allow:
 
 ```text
-src
-│
-├── api
-│   ├── authApi.ts
-│   ├── donationApi.ts
-│   ├── ngoApi.ts
-│   ├── deliveryApi.ts
-│   └── feedbackApi.ts
-│
-├── pages
-│   ├── auth
-│   │   ├── login.tsx
-│   │   └── Register.tsx
-│   │
-│   ├── donor
-│   │   ├── Dashboard.tsx
-│   │   ├── CreateDonation.tsx
-│   │   ├── MyDonations.tsx
-│   │   ├── DonationDetails.tsx
-│   │   └── Profile.tsx
-│   │
-│   ├── ngo
-│   │   ├── Dashboard.tsx
-│   │   ├── Donations.tsx
-│   │   ├── DonationDetails.tsx
-│   │   ├── AssignDelivery.tsx
-│   │   └── Analytics.tsx
-│   │
-│   ├── delivery
-│   │   ├── Dashboard.tsx
-│   │   ├── Tasks.tsx
-│   │   ├── TaskDetails.tsx
-│   │   └── Profile.tsx
-│
-├── components
-│   ├── Navbar
-│   ├── Sidebar
-│   ├── DonationCard
-│   ├── ProtectedRoute
-│   ├── StatusBadge
-│   └── DashboardCard
-│
-├── hooks
-│
-├── routes
-│
-├── store
-│
-├── types
-│
-└── services
+http://localhost:5173
 ```
 
----
-
-## Backend
+## Project Structure
 
 ```text
-com.foodlink
-
-├── auth
-│   ├── controller
-│   ├── service
-│   ├── dto
-│   └── repository
-│
-├── donation
-│   ├── controller
-│   ├── service
-│   ├── dto
-│   └── repository
-│
-├── ngo
-│
-├── delivery
-│
-├── feedback
-│
-├── notification
-│
-├── websocket
-│
-├── security
-│
-├── config
-│
-└── common
+frontend/
+|-- package.json
+|-- vite.config.ts
+|-- tsr.config.json
+|-- README.md
+|-- public/
+|   |-- favicon.svg
+|   |-- icons.svg
+|   `-- placeholder.svg
+`-- src/
+    |-- main.tsx
+    |-- App.tsx
+    |-- routeTree.gen.ts
+    |-- api/
+    |   `-- client.ts
+    |-- auth/
+    |   |-- authStore.ts
+    |   |-- permissions.ts
+    |   |-- requireAuth.ts
+    |   |-- requirePermission.ts
+    |   `-- roles.ts
+    |-- components/
+    |   |-- common/
+    |   |-- layout/
+    |   |-- ui/
+    |   |-- login-form.tsx
+    |   |-- signup-form.tsx
+    |   `-- Navbar.tsx
+    |-- features/
+    |   |-- donation/
+    |   |   |-- api/
+    |   |   |-- components/
+    |   |   |-- hooks/
+    |   |   |-- pages/
+    |   |   `-- schemas/
+    |   |-- donor/
+    |   |   |-- api/
+    |   |   |-- hooks/
+    |   |   |-- pages/
+    |   |   `-- schemas/
+    |   `-- ngo/
+    |       |-- api/
+    |       |-- hooks/
+    |       |-- pages/
+    |       `-- schemas/
+    |-- pages/
+    |-- routes/
+    |-- services/
+    |   |-- openapi/
+    |   |   `-- generated.ts
+    |   |-- api-error.ts
+    |   |-- query-client.ts
+    |   `-- query-keys.ts
+    |-- types/
+    `-- utils/
 ```
 
----
-
-# MongoDB Collections
-
-## users
-
-```json
-{
-  "_id": "64abc123",
-
-  "name": "John",
-
-  "email": "john@gmail.com",
-
-  "password": "hashed-password",
-
-  "role": "DONOR",
-
-  "phone": "9876543210",
-
-  "address": "Bangalore",
-
-  "createdAt": "2026-01-01T10:00"
-}
-```
-
----
-
-## donations
-
-```json
-{
-  "_id": "don123",
-
-  "donorId": "user123",
-
-  "foodName": "Rice",
-
-  "foodType": "Cooked",
-
-  "quantity": "50 Plates",
-
-  "description": "Fresh food",
-
-  "pickupAddress": "MG Road",
-
-  "pickupLatitude": 12.9716,
-
-  "pickupLongitude": 77.5946,
-
-  "expiryTime": "2026-01-01T18:00",
-
-  "status": "PENDING",
-
-  "ngoId": null,
-
-  "deliveryPartnerId": null,
-
-  "createdAt": "2026-01-01T12:00"
-}
-```
-
----
-
-## feedbacks
-
-```json
-{
-  "_id": "fb123",
-
-  "donationId": "don123",
-
-  "userId": "user123",
-
-  "rating": 5,
-
-  "comment": "Excellent service"
-}
-```
-
----
-
-# Enums
-
-## Role
-
-```java
-public enum Role {
-
-    DONOR,
-
-    NGO,
-
-    DELIVERY,
-
-    ADMIN
-}
-```
-
----
-
-## DonationStatus
-
-```java
-public enum DonationStatus {
-
-    PENDING,
-
-    APPROVED,
-
-    ASSIGNED,
-
-    PICKED_UP,
-
-    DELIVERED,
-
-    REJECTED
-}
-```
-
----
-
-# Authentication APIs
-
-## Register
-
-### POST
-
-```http
-/api/auth/register
-```
-
-Request
-
-```json
-{
-  "name":"John",
-
-  "email":"john@gmail.com",
-
-  "password":"123456",
-
-  "role":"DONOR"
-}
-```
-
-Response
-
-```json
-{
-  "message":"User Registered Successfully"
-}
-```
-
----
-
-## Login
-
-### POST
-
-```http
-/api/auth/login
-```
-
-Request
-
-```json
-{
-  "email":"john@gmail.com",
-
-  "password":"123456"
-}
-```
-
-Response
-
-```json
-{
-  "token":"jwt-token",
-
-  "role":"DONOR"
-}
-```
-
----
-
-# Donor APIs
-
-## Create Donation
-
-### POST
-
-```http
-/api/donations
-```
-
-Request
-
-```json
-{
-  "foodName":"Rice",
-
-  "foodType":"Cooked",
-
-  "quantity":"50 Plates",
-
-  "description":"Fresh food",
-
-  "pickupAddress":"Bangalore",
-
-  "expiryTime":"2026-01-01T18:00"
-}
-```
-
----
-
-## Get My Donations
-
-### GET
-
-```http
-/api/donations/my
-```
-
----
-
-## Get Donation Details
-
-### GET
-
-```http
-/api/donations/{id}
-```
-
----
-
-## Delete Donation
-
-### DELETE
-
-```http
-/api/donations/{id}
-```
-
-Allowed only if:
+## Main Packages
+
+- `src/routes`: File-based TanStack Router routes.
+- `src/auth`: JWT persistence, role normalization, auth guards, and permission helpers.
+- `src/api`: Shared Axios client and request/response interceptors.
+- `src/services/openapi/generated.ts`: TypeScript API contract types generated from the backend OpenAPI shape.
+- `src/features/donation`: Donation API wrappers, query hooks, forms, tables, and pages.
+- `src/features/donor`: Donor profile API wrappers, hooks, schemas, and pages.
+- `src/features/ngo`: NGO profile API wrappers, hooks, schemas, and pages.
+- `src/components/ui`: Shared reusable UI primitives.
+- `src/components/layout`: Donor and NGO app layouts.
+
+## API Types
+
+Backend DTO and enum types are kept in:
 
 ```text
-PENDING
+src/services/openapi/generated.ts
 ```
 
----
+The frontend currently uses these generated types for:
 
-# NGO APIs
+- `FoodCategory`
+- `DonationStatus`
+- `DonorType`
+- `RoleName`
+- `CreateDonationRequest`
+- `UpdateDonationRequest`
+- `AcceptDonationRequest`
+- `DonationResponse`
+- `UpdateDonorProfileRequest`
+- `DonorProfileResponse`
+- `UpdateNgoProfileRequest`
+- `NgoProfileResponse`
+- `AuthRequestDto`
+- `LoginResponseDto`
 
-## Get Pending Donations
+Update this file whenever backend request or response DTOs change.
 
-### GET
+## Configuration
 
-```http
-/api/ngo/donations/pending
+The shared Axios client reads the backend URL from:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
----
+Create a local `.env` file if you need a custom backend URL:
 
-## Approve Donation
-
-### PATCH
-
-```http
-/api/ngo/donations/{id}/approve
+```env
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
-Response
+Note: the login and signup forms currently call `http://localhost:8080` directly for `/auth/login`, `/auth/signup/donor`, `/auth/signup/ngo`, and `/oauth2/authorization/google`. Keep the backend on port `8080`, or update those form URLs if the backend runs elsewhere.
 
-```json
-{
-  "message":"Donation Approved"
-}
-```
+## Setup
 
----
-
-## Reject Donation
-
-### PATCH
-
-```http
-/api/ngo/donations/{id}/reject
-```
-
----
-
-## Assign Delivery Partner
-
-### PATCH
-
-```http
-/api/ngo/donations/{id}/assign
-```
-
-Request
-
-```json
-{
-  "deliveryPartnerId":"abc123"
-}
-```
-
----
-
-## NGO Dashboard Stats
-
-### GET
-
-```http
-/api/ngo/dashboard
-```
-
-Response
-
-```json
-{
-  "pending":20,
-
-  "approved":10,
-
-  "delivered":100
-}
-```
-
----
-
-# Delivery APIs
-
-## Assigned Tasks
-
-### GET
-
-```http
-/api/delivery/tasks
-```
-
----
-
-## Mark Picked Up
-
-### PATCH
-
-```http
-/api/delivery/tasks/{id}/pickup
-```
-
-Status
-
-```text
-ASSIGNED -> PICKED_UP
-```
-
----
-
-## Mark Delivered
-
-### PATCH
-
-```http
-/api/delivery/tasks/{id}/deliver
-```
-
-Status
-
-```text
-PICKED_UP -> DELIVERED
-```
-
----
-
-# Feedback APIs
-
-## Submit Feedback
-
-### POST
-
-```http
-/api/feedback
-```
-
-Request
-
-```json
-{
-  "donationId":"123",
-
-  "rating":5,
-
-  "comment":"Food delivered on time"
-}
-```
-
----
-
-## Get Feedback
-
-### GET
-
-```http
-/api/feedback/{donationId}
-```
-
----
-
-# Dashboard Requirements
-
-## Donor Dashboard
-
-Cards
-
-```text
-Total Donations
-Pending Donations
-Delivered Donations
-Rejected Donations
-```
-
-Tables
-
-```text
-Recent Donations
-Current Status
-```
-
----
-
-## NGO Dashboard
-
-Cards
-
-```text
-Pending Donations
-Approved Donations
-Assigned Deliveries
-Completed Deliveries
-```
-
-Tables
-
-```text
-Recent Donations
-Delivery Assignments
-```
-
----
-
-## Delivery Dashboard
-
-Cards
-
-```text
-Assigned Tasks
-Completed Tasks
-Pending Tasks
-```
-
-Tables
-
-```text
-Today's Tasks
-```
-
----
-
-# Real-Time Tracking
-
-Use WebSocket
-
-Dependencies
-
-```xml
-spring-boot-starter-websocket
-```
-
-Events
-
-```text
-DONATION_CREATED
-
-DONATION_APPROVED
-
-DELIVERY_ASSIGNED
-
-PICKED_UP
-
-DELIVERED
-```
-
-Frontend subscribes:
-
-```typescript
-/ws/tracking/{donationId}
-```
-
----
-
-# Analytics Module
-
-NGO/Admin Dashboard
-
-Metrics
-
-```text
-Total Donations
-
-Total Food Saved
-
-Meals Served
-
-Successful Deliveries
-
-Active NGOs
-
-Active Delivery Partners
-```
-
-Suggested Charts
-
-```text
-Monthly Donations
-
-Status Distribution
-
-Food Category Distribution
-```
-
-Use
+Install dependencies:
 
 ```bash
-npm install recharts
+npm install
 ```
 
----
+Start the development server:
 
-# Notification Module
+```bash
+npm run dev
+```
 
-Notifications
+Default frontend URL:
 
 ```text
-Donation Approved
-
-Donation Rejected
-
-Delivery Assigned
-
-Food Picked Up
-
-Food Delivered
+http://localhost:5173
 ```
 
-Collection
+Build for production:
 
-```json
-{
-  "_id":"not123",
-
-  "userId":"123",
-
-  "title":"Donation Approved",
-
-  "message":"Your donation has been approved",
-
-  "read":false
-}
+```bash
+npm run build
 ```
 
----
+Preview the production build:
 
-# Future Enhancements
-
-## AI Food Recommendation
-
-Predict nearest NGO.
-
-## Google Maps Integration
-
-Display:
-
-- Donor Location
-- NGO Location
-- Delivery Route
-
-## QR Verification
-
-Generate QR for pickup confirmation.
-
-## Image Upload
-
-Store images in:
-
-- Cloudinary
-- AWS S3
-
-## Push Notifications
-
-Using Firebase Cloud Messaging.
-
----
-
-# Security
-
-## JWT Authentication
-
-Protected APIs:
-
-```text
-/api/donations/**
-/api/ngo/**
-/api/delivery/**
+```bash
+npm run preview
 ```
 
----
+Lint:
 
-## Password Encryption
-
-```java
-BCryptPasswordEncoder
+```bash
+npm run lint
 ```
 
----
+## Available Scripts
 
-## Role Based Authorization
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Start the Vite dev server |
+| `npm run build` | Type-check and build the app |
+| `npm run preview` | Preview the production build locally |
+| `npm run lint` | Run ESLint |
 
-```java
-DONOR
+## Routes
 
-NGO
-
-DELIVERY
-
-ADMIN
-```
-
----
-
-# Development Timeline
-
-## Phase 1
-
-Authentication
-
-- Register
-- Login
-- JWT
-- Role Management
-
-## Phase 2
-
-Donations
-
-- Create Donation
-- View Donations
-- Donation Details
-
-## Phase 3
-
-NGO Module
-
-- Approve
-- Reject
-- Assign Delivery
-
-## Phase 4
-
-Delivery Module
-
-- Pickup
-- Deliver
-- Tracking
-
-## Phase 5
-
-Feedback
-
-- Ratings
-- Comments
-
-## Phase 6
-
-Analytics
-
-- Charts
-- Reports
-
-## Phase 7
-
-WebSocket
-
-- Real-Time Updates
-
----
-
-# MVP Completion Checklist
+| Path | Access | Description |
+| --- | --- | --- |
+| `/home` | Public | Public home page |
+| `/about` | Public | About page |
+| `/login` | Public | Username/password login and Google OAuth entry |
+| `/signup` | Public | Donor or NGO registration |
+| `/login/callback` | Public | OAuth callback handling |
+| `/donor/dashboard` | Authenticated donor | Donor dashboard |
+| `/donor/profile` | Authenticated donor | View and update donor profile |
+| `/donor/donations` | Authenticated donor | List donor's donations |
+| `/donor/donations/create` | Authenticated donor | Create a donation |
+| `/donor/donations/$donationId/edit` | Authenticated donor | Edit an available donation |
+| `/donor/history` | Authenticated donor | Completed donor donation history |
+| `/ngo/dashboard` | Authenticated NGO | NGO dashboard |
+| `/ngo/profile` | Authenticated NGO | View and update NGO profile |
+| `/ngo/donations/browse` | Authenticated NGO | Browse available donations |
+| `/ngo/donations/accepted` | Authenticated NGO | View accepted donations |
+| `/ngo/history` | Authenticated NGO | Completed NGO donation history |
+| `/donations/$id` | Authenticated donor or NGO | Donation details |
 
 ## Authentication
 
-- [x] Register
-- [x] Login
-- [x] JWT
+The app supports:
 
-## Donor
+- Local username/password login through `POST /auth/login`.
+- Donor signup through `POST /auth/signup/donor`.
+- NGO signup through `POST /auth/signup/ngo`.
+- Google OAuth2 login through `/oauth2/authorization/google`.
+- JWT storage in `localStorage` under the `foodlink-auth` key.
+- Automatic `Authorization: Bearer <token>` headers through the shared Axios client.
+- Automatic logout when a protected Axios request returns `401` for an authenticated request.
 
-- [ ] Dashboard
-- [ ] Create Donation
-- [ ] My Donations
-- [ ] Tracking
+After login, users are redirected by role:
 
-## NGO
+| Role | Redirect |
+| --- | --- |
+| `DONOR` | `/donor/dashboard` |
+| `NGO` | `/ngo/dashboard` |
+| Other roles | `/home` |
 
-- [ ] Approve Donation
-- [ ] Reject Donation
-- [ ] Assign Delivery
+## Backend APIs Used
 
-## Delivery
+### Auth
 
-- [ ] Pickup Task
-- [ ] Deliver Task
+| Method | Path | Used By |
+| --- | --- | --- |
+| `POST` | `/auth/login` | Login form |
+| `POST` | `/auth/signup/donor` | Signup form |
+| `POST` | `/auth/signup/ngo` | Signup form |
+| `GET` | `/oauth2/authorization/google` | Google login button |
 
-## Feedback
+### Donor Profile
 
-- [ ] Submit Feedback
+| Method | Path | Used By |
+| --- | --- | --- |
+| `GET` | `/donor/profile/get-my-profile` | Donor profile page |
+| `PUT` | `/donor/profile/update-my-profile` | Donor profile form |
 
-## Analytics
+### NGO Profile
 
-- [ ] Dashboard Charts
+| Method | Path | Used By |
+| --- | --- | --- |
+| `GET` | `/ngo/profile/get-my-profile` | NGO profile page |
+| `PUT` | `/ngo/profile/update-my-profile` | NGO profile form |
 
-## Real-Time Updates
+### Donations
 
-- [ ] WebSocket Integration
+| Method | Path | Used By |
+| --- | --- | --- |
+| `POST` | `/donations/create-donation` | Donor create donation page |
+| `PUT` | `/donations/{donationId}` | Donor edit donation page |
+| `DELETE` | `/donations/delete-donation/{donationId}` | Donor donations table |
+| `GET` | `/donations/my-donations` | Donor donations and details |
+| `GET` | `/donations/available-donations` | NGO browse donations |
+| `GET` | `/donations/my-accepted-donations` | NGO accepted donations |
+| `GET` | `/donations/history/donor` | Donor history |
+| `GET` | `/donations/history/ngo` | NGO history |
+| `POST` | `/donations/{donationId}/accept` | NGO accept donation action |
+| `PATCH` | `/donations/{donationId}/dispatch` | Donor dispatch action |
+| `PATCH` | `/donations/{donationId}/receive` | NGO receive action |
+| `PATCH` | `/donations/{donationId}/complete` | NGO complete action |
 
----
+## Donation Workflow
 
-# Expected Outcome
+```text
+Donor creates donation
+  |
+  v
+AVAILABLE
+  |
+  v
+NGO accepts donation
+  |
+  v
+ACCEPTED
+  |
+  v
+Donor dispatches donation
+  |
+  v
+DISPATCHED
+  |
+  v
+NGO marks donation received
+  |
+  v
+RECEIVED
+  |
+  v
+NGO completes donation
+  |
+  v
+COMPLETED
+```
 
-A scalable full-stack food donation platform that:
+Other backend statuses represented in the frontend types:
 
-- Reduces food wastage
-- Connects donors with NGOs
-- Tracks food delivery in real time
-- Provides analytics and transparency
-- Supports the Zero Hunger initiativew#   F o o d l i n k - F r o n t e n d  
- 
+```text
+EXPIRED
+CANCELLED
+```
+
+## Supported Enums
+
+Food categories:
+
+```text
+VEG
+NON_VEG
+MIXED
+BAKERY
+FRUITS
+BEVERAGES
+```
+
+Donor types:
+
+```text
+INDIVIDUAL
+RESTAURANT
+HOTEL
+CATERING_SERVICE
+VOLUNTEER_GROUP
+```
+
+Roles:
+
+```text
+ADMIN
+DONOR
+NGO
+```
+
+## Common Development Flow
+
+1. Start the Spring Boot backend on `http://localhost:8080`.
+2. Confirm MongoDB, roles, permissions, and OAuth settings are configured in the backend.
+3. Install frontend dependencies with `npm install`.
+4. Start the frontend with `npm run dev`.
+5. Open `http://localhost:5173`.
+6. Register as a donor or NGO from `/signup`.
+7. Login from `/login`.
+8. Use the donor or NGO dashboard to manage profiles and donations.
+
+## Notes
+
+- `src/routeTree.gen.ts` is generated by TanStack Router and should not be edited manually.
+- `src/services/openapi/generated.ts` should track backend DTO changes.
+- Protected app routes call `requireAuth()` and redirect unauthenticated users to `/login`.
+- Role checks use normalized role names, so values such as `ROLE_DONOR` are treated as `DONOR`.
+- Keep real backend secrets in the backend environment, not in this frontend repository.

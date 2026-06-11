@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router"
-import { BarChart3, ClipboardList, Home, LogOut, Menu, PlusCircle, User, X } from "lucide-react"
+import { BarChart3, ClipboardList, History, Home, LogOut, Menu, PlusCircle, User, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useAuthStore } from "@/auth/authStore"
@@ -15,6 +15,7 @@ const donorNavigation = [
   { label: "My Donations", href: "/donor/donations", icon: ClipboardList },
   { label: "Create Donation", href: "/donor/donations/create", icon: PlusCircle },
   { label: "Profile", href: "/donor/profile", icon: User },
+  { label: "History", href: "/donor/history", icon: History },
 ]
 
 function Breadcrumbs({ pathname }: { pathname: string }) {

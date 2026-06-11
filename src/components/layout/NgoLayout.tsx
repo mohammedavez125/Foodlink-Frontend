@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router"
-import { BarChart3, ClipboardList, Home, LogOut, Menu, PackageSearch, User, X } from "lucide-react"
+import { BarChart3, ClipboardList, History, Home, LogOut, Menu, PackageSearch, User, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useAuthStore } from "@/auth/authStore"
@@ -12,9 +12,10 @@ interface DashboardLayoutProps {
 
 const ngoNavigation = [
   { label: "Dashboard", href: "/ngo/dashboard", icon: Home },
-  { label: "Browse Donations", href: "/ngo/donations/browse", icon: PackageSearch },
-  { label: "Accepted", href: "/ngo/donations/accepted", icon: ClipboardList },
+  { label: "Available Donations", href: "/ngo/donations/browse", icon: PackageSearch },
+  { label: "Accepted Donations", href: "/ngo/donations/accepted", icon: ClipboardList },
   { label: "Profile", href: "/ngo/profile", icon: User },
+  { label: "History", href: "/ngo/history", icon: History },
 ]
 
 function Breadcrumbs({ pathname }: { pathname: string }) {

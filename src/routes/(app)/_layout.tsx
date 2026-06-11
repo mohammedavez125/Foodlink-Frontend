@@ -8,7 +8,11 @@ import { requireAuth }
 
 export const Route =
     createFileRoute("/(app)/_layout")({
-        beforeLoad() {
+        beforeLoad({ location }) {
+            if (location.pathname === "/about") {
+                return
+            }
+
             requireAuth()
         },
 

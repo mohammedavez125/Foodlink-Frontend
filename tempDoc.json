@@ -10,7 +10,93 @@
       "description": "Generated server url"
     }
   ],
+  "tags": [
+    {
+      "name": "Donations",
+      "description": "Donation detail and workflow APIs"
+    }
+  ],
   "paths": {
+    "/user/update-user/{userId}": {
+      "put": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/role/update-role/{roleId}": {
+      "put": {
+        "tags": [
+          "role-controller"
+        ],
+        "operationId": "updateRole",
+        "parameters": [
+          {
+            "name": "roleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Role"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/ngo/profile/update-my-profile": {
       "put": {
         "tags": [
@@ -71,11 +157,13 @@
         }
       }
     },
-    "/donations/update-donation/{donationId}": {
+    "/donations/{donationId}": {
       "put": {
         "tags": [
-          "donation-controller"
+          "Donations"
         ],
+        "summary": "Update donation details",
+        "description": "DONOR updates editable donation details. Allowed only while status is AVAILABLE.",
         "operationId": "updateDonation",
         "parameters": [
           {
@@ -99,7 +187,37 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Donation details updated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donation is not AVAILABLE or request is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing DONATION_UPDATE permission or caller is not owner",
             "content": {
               "*/*": {
                 "schema": {
@@ -141,11 +259,13 @@
         }
       }
     },
-    "/donations/{donationId}/accept-donation": {
+    "/donations/{donationId}/accept": {
       "post": {
         "tags": [
-          "donation-controller"
+          "Donations"
         ],
+        "summary": "Accept donation",
+        "description": "NGO accepts an AVAILABLE donation, provides drop location, and moves it to ACCEPTED.",
         "operationId": "acceptDonation",
         "parameters": [
           {
@@ -157,9 +277,49 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptDonationRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Donation accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donation is not AVAILABLE, expired, or drop location is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing DONATION_ACCEPT permission",
             "content": {
               "*/*": {
                 "schema": {
@@ -174,8 +334,10 @@
     "/donations/create-donation": {
       "post": {
         "tags": [
-          "donation-controller"
+          "Donations"
         ],
+        "summary": "Create donation",
+        "description": "DONOR creates a new AVAILABLE donation.",
         "operationId": "createDonation",
         "requestBody": {
           "content": {
@@ -284,6 +446,192 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/donations/{donationId}/receive": {
+      "patch": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Receive donation",
+        "description": "Accepted NGO marks a DISPATCHED donation as RECEIVED.",
+        "operationId": "receiveDonation",
+        "parameters": [
+          {
+            "name": "donationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Donation received",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donation is not DISPATCHED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing DELIVERY_PICKUP permission or caller is not accepted NGO",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/donations/{donationId}/dispatch": {
+      "patch": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Dispatch donation",
+        "description": "DONOR dispatches own ACCEPTED donation and moves it to DISPATCHED.",
+        "operationId": "dispatchDonation",
+        "parameters": [
+          {
+            "name": "donationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Donation dispatched",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donation is not ACCEPTED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing DELIVERY_START_TRANSIT permission or caller is not owner",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/donations/{donationId}/complete": {
+      "patch": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Complete donation",
+        "description": "Accepted NGO completes a RECEIVED donation.",
+        "operationId": "completeDonation",
+        "parameters": [
+          {
+            "name": "donationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Donation completed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donation is not RECEIVED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing DELIVERY_COMPLETE permission or caller is not accepted NGO",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
                 }
               }
             }
@@ -410,8 +758,10 @@
     "/donations/my-donations": {
       "get": {
         "tags": [
-          "donation-controller"
+          "Donations"
         ],
+        "summary": "List my donations",
+        "description": "DONOR lists donations created by its profile.",
         "operationId": "getMyDonations",
         "responses": {
           "200": {
@@ -430,11 +780,139 @@
         }
       }
     },
+    "/donations/my-accepted-donations": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "List accepted donations",
+        "description": "NGO lists donations accepted by its profile.",
+        "operationId": "getAcceptedDonations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DonationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/donations/history/ngo": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Get NGO donation history",
+        "description": "Donation history contains only COMPLETED donations accepted by the current NGO profile.",
+        "operationId": "getNgoHistory",
+        "responses": {
+          "200": {
+            "description": "Completed NGO donations returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DonationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DonationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing DONATION_HISTORY_VIEW permission",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DonationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/donations/history/donor": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Get donor donation history",
+        "description": "Donation history contains only COMPLETED donations belonging to the current donor profile.",
+        "operationId": "getDonorHistory",
+        "responses": {
+          "200": {
+            "description": "Completed donor donations returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DonationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DonationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing DONATION_HISTORY_VIEW permission",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DonationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/donations/available-donations": {
       "get": {
         "tags": [
-          "donation-controller"
+          "Donations"
         ],
+        "summary": "List available donations",
         "operationId": "getAvailableDonations",
         "responses": {
           "200": {
@@ -473,6 +951,52 @@
         }
       }
     },
+    "/user/delete-user/{userId}": {
+      "delete": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/role/delete-role/{roleId}": {
+      "delete": {
+        "tags": [
+          "role-controller"
+        ],
+        "operationId": "deleteRole",
+        "parameters": [
+          {
+            "name": "roleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/ngo/profile/delete-my-profile": {
       "delete": {
         "tags": [
@@ -502,8 +1026,10 @@
     "/donations/delete-donation/{donationId}": {
       "delete": {
         "tags": [
-          "donation-controller"
+          "Donations"
         ],
+        "summary": "Delete donation",
+        "description": "DONOR deletes own donation. Allowed only while status is AVAILABLE.",
         "operationId": "deleteDonation",
         "parameters": [
           {
@@ -543,6 +1069,148 @@
           "pinCode": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "GrantedAuthority": {
+        "type": "object",
+        "properties": {
+          "authority": {
+            "type": "string"
+          }
+        }
+      },
+      "ObjectId": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "roleName": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "NGO",
+              "DONOR"
+            ]
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "DONATION_CREATE",
+                "DONATION_READ",
+                "DONATION_VIEW",
+                "DONATION_VIEW_OWN",
+                "DONATION_HISTORY_VIEW",
+                "DONATION_UPDATE",
+                "DONATION_DELETE",
+                "DONOR_PROFILE_READ",
+                "DONOR_PROFILE_UPDATE",
+                "DONOR_PROFILE_DELETE",
+                "NGO_PROFILE_READ",
+                "NGO_PROFILE_UPDATE",
+                "NGO_PROFILE_DELETE",
+                "DONATION_VIEW_ACCEPTED",
+                "DONATION_ACCEPT",
+                "DONATION_REJECT",
+                "DONATION_LOCK",
+                "DONATION_REJECT_BY_NGO",
+                "DELIVERY_ASSIGN",
+                "DELIVERY_PICKUP",
+                "DELIVERY_START_TRANSIT",
+                "DELIVERY_COMPLETE",
+                "ADDRESS_VIEW",
+                "ADDRESS_SHARE",
+                "ROUTE_VIEW",
+                "ETA_VIEW",
+                "FEEDBACK_CREATE",
+                "FEEDBACK_READ",
+                "FEEDBACK_DELETE",
+                "REPORT_VIEW",
+                "REPORT_EXPORT",
+                "NGO_APPROVE",
+                "NGO_REJECT",
+                "NGO_SUSPEND",
+                "USER_READ",
+                "USER_UPDATE",
+                "USER_DELETE",
+                "ROLE_READ",
+                "ROLE_CREATE",
+                "ROLE_UPDATE",
+                "ROLE_DELETE",
+                "ADMIN_ACCESS"
+              ]
+            },
+            "uniqueItems": true
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "username": {
+            "type": "string"
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "LOCAL",
+              "GOOGLE"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "authorities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrantedAuthority"
+            }
+          },
+          "credentialsNonExpired": {
+            "type": "boolean"
+          },
+          "accountNonExpired": {
+            "type": "boolean"
+          },
+          "accountNonLocked": {
+            "type": "boolean"
           }
         }
       },
@@ -793,7 +1461,7 @@
               "AVAILABLE",
               "ACCEPTED",
               "DISPATCHED",
-              "DELIVERED",
+              "RECEIVED",
               "COMPLETED",
               "EXPIRED",
               "CANCELLED"
@@ -802,6 +1470,26 @@
           "estimatedMinutes": {
             "type": "integer",
             "format": "int32"
+          },
+          "expiryTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dispatchedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -828,80 +1516,22 @@
             "type": "number",
             "format": "double"
           }
-        }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ]
       },
-      "ObjectId": {
+      "AcceptDonationRequest": {
         "type": "object",
         "properties": {
-          "timestamp": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "date": {
-            "type": "string",
-            "format": "date-time"
+          "dropLocation": {
+            "$ref": "#/components/schemas/DropLocation"
           }
-        }
-      },
-      "Role": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "$ref": "#/components/schemas/ObjectId"
-          },
-          "roleName": {
-            "type": "string",
-            "enum": [
-              "ADMIN",
-              "NGO",
-              "DONOR"
-            ]
-          },
-          "permissions": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "DONATION_CREATE",
-                "DONATION_READ",
-                "DONATION_UPDATE",
-                "DONATION_DELETE",
-                "DONOR_PROFILE_READ",
-                "DONOR_PROFILE_UPDATE",
-                "NGO_PROFILE_READ",
-                "NGO_PROFILE_UPDATE",
-                "DONATION_ACCEPT",
-                "DONATION_REJECT",
-                "DONATION_LOCK",
-                "DELIVERY_ASSIGN",
-                "DELIVERY_PICKUP",
-                "DELIVERY_START_TRANSIT",
-                "DELIVERY_COMPLETE",
-                "ADDRESS_VIEW",
-                "ADDRESS_SHARE",
-                "ROUTE_VIEW",
-                "ETA_VIEW",
-                "FEEDBACK_CREATE",
-                "FEEDBACK_READ",
-                "FEEDBACK_DELETE",
-                "REPORT_VIEW",
-                "REPORT_EXPORT",
-                "NGO_APPROVE",
-                "NGO_REJECT",
-                "NGO_SUSPEND",
-                "USER_READ",
-                "USER_UPDATE",
-                "USER_DELETE",
-                "ROLE_READ",
-                "ROLE_CREATE",
-                "ROLE_UPDATE",
-                "ROLE_DELETE",
-                "ADMIN_ACCESS"
-              ]
-            },
-            "uniqueItems": true
-          }
-        }
+        },
+        "required": [
+          "dropLocation"
+        ]
       },
       "CreateDonationRequest": {
         "type": "object",
@@ -1121,68 +1751,6 @@
           },
           "role": {
             "$ref": "#/components/schemas/Role"
-          }
-        }
-      },
-      "GrantedAuthority": {
-        "type": "object",
-        "properties": {
-          "authority": {
-            "type": "string"
-          }
-        }
-      },
-      "User": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "$ref": "#/components/schemas/ObjectId"
-          },
-          "role": {
-            "$ref": "#/components/schemas/Role"
-          },
-          "username": {
-            "type": "string"
-          },
-          "firstname": {
-            "type": "string"
-          },
-          "lastname": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "phone": {
-            "type": "string"
-          },
-          "address": {
-            "$ref": "#/components/schemas/Address"
-          },
-          "provider": {
-            "type": "string",
-            "enum": [
-              "LOCAL",
-              "GOOGLE"
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "authorities": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GrantedAuthority"
-            }
-          },
-          "accountNonLocked": {
-            "type": "boolean"
-          },
-          "credentialsNonExpired": {
-            "type": "boolean"
-          },
-          "accountNonExpired": {
-            "type": "boolean"
           }
         }
       }

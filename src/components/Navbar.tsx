@@ -29,17 +29,17 @@ export function Navbar() {
             Home
           </Link>
           <Link
-            to="/home"
+            to="/about"
             className="text-sm font-semibold text-slate-600 transition-colors hover:text-green-600"
           >
             About Us
           </Link>
-          <Link
-            to="/home"
+          <a
+            href="/home#how-it-works"
             className="text-sm font-semibold text-slate-600 transition-colors hover:text-green-600"
           >
             How it Works
-          </Link>
+          </a>
         </nav>
 
         <div className="flex items-center gap-4">

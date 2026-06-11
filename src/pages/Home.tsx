@@ -108,7 +108,7 @@ function Home() {
                 </section>
 
                 {/* Features Section */}
-                <section className="py-24 bg-slate-50">
+                <section className="py-24 bg-slate-50" id="how-it-works">
                     <div className="container mx-auto px-6 text-center">
                         <div className="max-w-3xl mx-auto mb-16">
                             <h2 className="text-blue-600 font-bold tracking-wider uppercase text-sm mb-3">Our Mission</h2>

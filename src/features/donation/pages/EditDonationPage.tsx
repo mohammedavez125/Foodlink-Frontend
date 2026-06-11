@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { ErrorState, PageHeader } from "@/components/common"
+import { EmptyState, ErrorState, PageHeader } from "@/components/common"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DonationForm, useDonation, useUpdateDonation } from "@/features/donation"
 import type { DonationFormValues } from "../schemas/donationSchema"
@@ -50,7 +51,14 @@ export function EditDonationPage({ donationId }: EditDonationPageProps) {
       {donationQuery.isLoading ? <Skeleton className="h-96" /> : null}
       {donationQuery.isError ? <ErrorState message={donationQuery.error.message} onRetry={() => void donationQuery.refetch()} /> : null}
       {updateDonation.isError ? <ErrorState message={updateDonation.error.message} /> : null}
-      {donation && defaultValues ? (
+      {donation && donation.status !== "AVAILABLE" ? (
+        <EmptyState
+          title="Donation cannot be edited"
+          description="Only available donations can be edited. Once accepted, the workflow is controlled by dispatch, receive, and complete actions."
+          action={<Button onClick={() => window.location.assign("/donor/donations")}>Back to donations</Button>}
+        />
+      ) : null}
+      {donation && donation.status === "AVAILABLE" && defaultValues ? (
         <Card>
           <CardContent className="p-4 md:p-6">
             <DonationForm

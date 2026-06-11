@@ -1,6 +1,5 @@
-import { ClipboardCheck, Clock, PackageCheck, Search } from "lucide-react"
+import { ClipboardCheck, Clock, Inbox, MapPinned, PackageCheck, Search, Truck } from "lucide-react"
 import { Link, useNavigate } from "@tanstack/react-router"
-import { useState } from "react"
 import { useAuthStore } from "@/auth/authStore"
 import { Button } from "@/components/ui/button"
 import { buttonVariants } from "@/components/ui/button-variants"
@@ -8,18 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState, ErrorState, PageHeader, StatCard, StatusBadge } from "@/components/common"
 import { cn } from "@/lib/utils"
-import { useAvailableDonations, useMyAcceptedDonations } from "@/features/donation"
-
-const EXPIRING_SOON_WINDOW_MS = 6 * 60 * 60 * 1000
+import { useAvailableDonations, useMyAcceptedDonations, useNgoHistory } from "@/features/donation"
 
 export function NgoDashboardPage() {
   const availableDonationsQuery = useAvailableDonations()
   const acceptedDonationsQuery = useMyAcceptedDonations()
-  const [loadedAt] = useState(() => Date.now())
+  const historyQuery = useNgoHistory()
   const availableDonations = availableDonationsQuery.data ?? []
   const acceptedDonations = acceptedDonationsQuery.data ?? []
-  const expiringDonations = availableDonations.filter((donation) => donation.expiryTime && new Date(donation.expiryTime).getTime() <= loadedAt + EXPIRING_SOON_WINDOW_MS)
+  const history = historyQuery.data ?? []
+  const acceptedCount = acceptedDonations.filter((donation) => donation.status === "ACCEPTED").length
+  const dispatchedCount = acceptedDonations.filter((donation) => donation.status === "DISPATCHED").length
+  const receivedCount = acceptedDonations.filter((donation) => donation.status === "RECEIVED").length
+  const completedCount = history.length
   const recentDonations = acceptedDonations.slice(0, 5)
+  const nearbyAvailableDonations = availableDonations.slice(0, 5)
   const isLoading = availableDonationsQuery.isLoading || acceptedDonationsQuery.isLoading
   const errorQuery = availableDonationsQuery.isError ? availableDonationsQuery : acceptedDonationsQuery.isError ? acceptedDonationsQuery : null
   const user = useAuthStore((s) => s.user)
@@ -53,10 +55,12 @@ export function NgoDashboardPage() {
 
       {!isLoading && !errorQuery ? (
         <>
-          <div className="grid gap-4 md:grid-cols-3">
-            <StatCard title="Available Donations" value={availableDonations.length} description="Food currently open for NGO collection" icon={<ClipboardCheck className="size-5" />} />
-            <StatCard title="Accepted Donations" value={acceptedDonations.length} description="Collections assigned to your NGO" icon={<Clock className="size-5" />} />
-            <StatCard title="Expiring Soon" value={expiringDonations.length} description="Available food expiring within 6 hours" icon={<PackageCheck className="size-5" />} />
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <StatCard title="Available" value={availableDonations.length} description="Open food donations nearby" icon={<ClipboardCheck className="size-5" />} />
+            <StatCard title="Accepted" value={acceptedCount} description="Waiting for donor dispatch" icon={<Clock className="size-5" />} />
+            <StatCard title="Dispatched" value={dispatchedCount} description="Ready to receive" icon={<Truck className="size-5" />} />
+            <StatCard title="Received" value={receivedCount} description="Ready to complete" icon={<Inbox className="size-5" />} />
+            <StatCard title="Total Food Donations Completed" value={historyQuery.isLoading ? "..." : completedCount} description="Completed donation history" icon={<PackageCheck className="size-5" />} />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
@@ -84,6 +88,35 @@ export function NgoDashboardPage() {
                     title="No accepted donations yet"
                     description="Browse available donations and accept them to start making an impact."
                     action={<Button onClick={() => navigate({ to: "/ngo/donations/browse" })}>Browse Food</Button>}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Nearby Available Donations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {nearbyAvailableDonations.length ? (
+                  <div className="space-y-3">
+                    {nearbyAvailableDonations.map((donation) => (
+                      <div className="flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between" key={donation.id ?? donation.foodName}>
+                        <div>
+                          <p className="font-medium">{donation.foodName ?? "Unnamed donation"}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {donation.pickupLocation?.city ?? "Location missing"} · {donation.quantity ?? "?"} portions
+                          </p>
+                        </div>
+                        <MapPinned className="size-5 text-muted-foreground" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="No nearby donations"
+                    description="There are no available donations to browse right now."
+                    action={<Button onClick={() => navigate({ to: "/ngo/donations/browse" })}>Browse Donations</Button>}
                   />
                 )}
               </CardContent>

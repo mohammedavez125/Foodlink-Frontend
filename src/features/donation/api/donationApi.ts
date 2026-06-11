@@ -1,5 +1,11 @@
-import type { CreateDonationRequest, DonationResponse, UpdateDonationRequest } from "@/services/openapi/generated"
+import type {
+  AcceptDonationRequest,
+  CreateDonationRequest,
+  DonationResponse,
+  UpdateDonationRequest,
+} from "@/services/openapi/generated"
 import { api } from "@/api/client"
+import { getRoleName } from "@/auth/roles"
 
 export async function getMyDonations(): Promise<DonationResponse[]> {
   const response = await api.get<DonationResponse[]>("/donations/my-donations")
@@ -15,9 +21,32 @@ export async function getAvailableDonations(): Promise<DonationResponse[]> {
   return response.data
 }
 
+export async function getDonorHistory(): Promise<DonationResponse[]> {
+  const response = await api.get<DonationResponse[]>("/donations/history/donor")
+  return response.data
+}
+
+export async function getNgoHistory(): Promise<DonationResponse[]> {
+  const response = await api.get<DonationResponse[]>("/donations/history/ngo")
+  return response.data
+}
+
+async function getDonationSourcesForCurrentRole(): Promise<DonationResponse[][]> {
+  const roleName = getRoleName()
+
+  if (roleName === "DONOR") {
+    return Promise.all([getMyDonations(), getDonorHistory()])
+  }
+
+  if (roleName === "NGO") {
+    return Promise.all([getAvailableDonations(), getMyAcceptedDonations(), getNgoHistory()])
+  }
+
+  return []
+}
+
 export async function getDonationById(donationId: string): Promise<DonationResponse> {
-  const results = await Promise.allSettled([getMyDonations(), getAvailableDonations(), getMyAcceptedDonations()])
-  const donations = results.flatMap((result) => (result.status === "fulfilled" ? result.value : []))
+  const donations = (await getDonationSourcesForCurrentRole()).flat()
   const donation = donations.find((item) => item.id === donationId)
 
   if (!donation) {
@@ -27,8 +56,7 @@ export async function getDonationById(donationId: string): Promise<DonationRespo
   return donation
 }
 export async function getAcceptedDonationById(donationId: string): Promise<DonationResponse> {
-  const results = await Promise.allSettled([getMyAcceptedDonations(), getAvailableDonations()])
-  const donations = results.flatMap((result) => (result.status === "fulfilled" ? result.value : []))
+  const donations = await getMyAcceptedDonations()
   const donation = donations.find((item) => item.id === donationId)
 
   if (!donation) {
@@ -45,7 +73,8 @@ export async function createDonation(payload: CreateDonationRequest): Promise<Do
 }
 
 export async function updateDonation(donationId: string, payload: UpdateDonationRequest): Promise<DonationResponse> {
-  const response = await api.put<DonationResponse>(`/donations/update-donation/${donationId}`, payload)
+  console.log("Donation request body sent", payload)
+  const response = await api.put<DonationResponse>(`/donations/${donationId}`, payload)
   return response.data
 }
 
@@ -53,7 +82,22 @@ export async function deleteDonation(donationId: string): Promise<void> {
   await api.delete(`/donations/delete-donation/${donationId}`)
 }
 
-export async function acceptDonation(donationId: string): Promise<DonationResponse> {
-  const response = await api.post<DonationResponse>(`/donations/${donationId}/accept-donation`)
+export async function acceptDonation(donationId: string, payload: AcceptDonationRequest): Promise<DonationResponse> {
+  const response = await api.post<DonationResponse>(`/donations/${donationId}/accept`, payload)
+  return response.data
+}
+
+export async function dispatchDonation(donationId: string): Promise<DonationResponse> {
+  const response = await api.patch<DonationResponse>(`/donations/${donationId}/dispatch`)
+  return response.data
+}
+
+export async function receiveDonation(donationId: string): Promise<DonationResponse> {
+  const response = await api.patch<DonationResponse>(`/donations/${donationId}/receive`)
+  return response.data
+}
+
+export async function completeDonation(donationId: string): Promise<DonationResponse> {
+  const response = await api.patch<DonationResponse>(`/donations/${donationId}/complete`)
   return response.data
 }

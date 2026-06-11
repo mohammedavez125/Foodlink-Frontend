@@ -5,7 +5,7 @@ const variants: Record<DonationStatus, React.ComponentProps<typeof Badge>["varia
   AVAILABLE: "success",
   ACCEPTED: "info",
   DISPATCHED: "warning",
-  DELIVERED: "secondary",
+  RECEIVED: "success",
   COMPLETED: "default",
   EXPIRED: "outline",
   CANCELLED: "destructive",

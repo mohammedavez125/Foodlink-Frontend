@@ -10,7 +10,8 @@ import {
   type Column,
   type SortingState,
 } from "@tanstack/react-table"
-import { ArrowUpDown, Eye, Pencil, Trash2, Truck } from "lucide-react"
+import { ArrowUpDown, Eye } from "lucide-react"
+import { Link } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
 import { buttonVariants } from "@/components/ui/button-variants"
 import { Card, CardContent } from "@/components/ui/card"
@@ -21,12 +22,10 @@ import type { DonationResponse } from "@/services/openapi/generated"
 import { cn } from "@/lib/utils"
 import { formatDateTime, readOptionalString } from "@/utils"
 
-interface DonorDonationsTableProps {
+interface DonationHistoryTableProps {
   donations: DonationResponse[]
-  isDeleting: boolean
-  isDispatching: boolean
-  onDelete: (donationId: string) => void
-  onDispatch: (donation: DonationResponse) => void
+  counterpartyLabel: string
+  getCounterparty: (donation: DonationResponse) => string
 }
 
 function sortableHeader(label: string, column: Column<DonationResponse, unknown>) {
@@ -38,21 +37,15 @@ function sortableHeader(label: string, column: Column<DonationResponse, unknown>
   )
 }
 
-export function DonorDonationsTable({
-  donations,
-  isDeleting,
-  isDispatching,
-  onDelete,
-  onDispatch,
-}: DonorDonationsTableProps) {
+export function DonationHistoryTable({ donations, counterpartyLabel, getCounterparty }: DonationHistoryTableProps) {
   const [globalFilter, setGlobalFilter] = useState("")
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>([{ id: "completedAt", desc: true }])
 
   const columns = useMemo<ColumnDef<DonationResponse>[]>(
     () => [
       {
         accessorKey: "foodName",
-        header: ({ column }) => sortableHeader("Food", column),
+        header: ({ column }) => sortableHeader("Food Name", column),
         cell: ({ row }) => <span className="font-medium">{row.original.foodName ?? "Unnamed donation"}</span>,
       },
       {
@@ -66,72 +59,41 @@ export function DonorDonationsTable({
         cell: ({ row }) => row.original.quantity ?? "Not provided",
       },
       {
+        id: "completedAt",
+        accessorFn: (row) => readOptionalString(row, "completedAt") ?? "",
+        header: ({ column }) => sortableHeader("Completed Date", column),
+        cell: ({ row }) => formatDateTime(readOptionalString(row.original, "completedAt")),
+      },
+      {
+        id: "counterparty",
+        accessorFn: (row) => getCounterparty(row),
+        header: counterpartyLabel,
+        cell: ({ row }) => getCounterparty(row.original),
+      },
+      {
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => <StatusBadge status={row.original.status} />,
       },
       {
-        id: "createdAt",
-        header: "Created",
-        cell: ({ row }) => formatDateTime(readOptionalString(row.original, "createdAt")),
-      },
-      {
-        id: "expiryTime",
-        header: "Expiry",
-        cell: ({ row }) => formatDateTime(readOptionalString(row.original, "expiryTime")),
-      },
-      {
         id: "actions",
-        header: "Actions",
-        cell: ({ row }) => {
-          const donationId = row.original.id
-          const status = row.original.status
-          const canEdit = status === "AVAILABLE"
-          const canDelete = status === "AVAILABLE"
-          const canDispatch = row.original.status === "ACCEPTED"
-
-          return (
-            <div className="flex flex-wrap items-center gap-1">
-              <a className={cn(buttonVariants({ size: "icon-sm", variant: "ghost" }), !donationId && "pointer-events-none opacity-50")} href={donationId ? `/donations/${donationId}` : "#"} aria-label="View donation"><Eye className="size-4" /></a>
-              {canEdit ? (
-                <a className={cn(buttonVariants({ size: "icon-sm", variant: "ghost" }), !donationId && "pointer-events-none opacity-50")} href={donationId ? `/donor/donations/${donationId}/edit` : "#"} aria-label="Edit donation"><Pencil className="size-4" /></a>
-              ) : null}
-              {canDispatch ? (
-                <Button
-                  size="icon-sm"
-                  variant="outline"
-                  disabled={!donationId || isDispatching}
-                  aria-label="Dispatch donation"
-                  title="Dispatch donation"
-                  onClick={() => onDispatch(row.original)}
-                >
-                  <Truck className="size-4" />
-                </Button>
-              ) : null}
-              {canDelete ? (
-                <Button
-                  size="icon-sm"
-                  variant="destructive"
-                  disabled={!donationId || isDeleting}
-                  aria-label="Delete donation"
-                  onClick={() => {
-                    if (donationId && window.confirm("Delete this donation?")) {
-                      onDelete(donationId)
-                    }
-                  }}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              ) : null}
-              {status === "DISPATCHED" ? <span className="text-xs text-muted-foreground">In transit</span> : null}
-              {status === "RECEIVED" ? <span className="text-xs text-muted-foreground">Received</span> : null}
-              {status === "COMPLETED" ? <span className="text-xs text-muted-foreground">Completed</span> : null}
-            </div>
-          )
-        },
+        header: "",
+        cell: ({ row }) => (
+          <Link
+            className={cn(
+              buttonVariants({ size: "icon-sm", variant: "ghost" }),
+              !row.original.id && "pointer-events-none opacity-50",
+            )}
+            to="/donations/$id"
+            params={{ id: row.original.id ?? "" }}
+            aria-label="View donation details"
+          >
+            <Eye className="size-4" />
+          </Link>
+        ),
       },
     ],
-    [isDeleting, isDispatching, onDelete, onDispatch],
+    [counterpartyLabel, getCounterparty],
   )
 
   const table = useReactTable({
@@ -149,19 +111,22 @@ export function DonorDonationsTable({
     getPaginationRowModel: getPaginationRowModel(),
   })
 
+  const visibleRows = table.getRowModel().rows
+
   return (
     <Card>
       <CardContent className="space-y-4 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Input
             className="sm:max-w-sm"
-            placeholder="Search donations..."
+            placeholder="Search history..."
             value={globalFilter}
             onChange={(event) => setGlobalFilter(event.target.value)}
           />
-          <p className="text-sm text-muted-foreground">{table.getFilteredRowModel().rows.length} donations</p>
+          <p className="text-sm text-muted-foreground">{table.getFilteredRowModel().rows.length} completed donations</p>
         </div>
-        <div className="overflow-hidden rounded-xl border">
+
+        <div className="hidden overflow-hidden rounded-xl border md:block">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -175,8 +140,8 @@ export function DonorDonationsTable({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row) => (
+              {visibleRows.length ? (
+                visibleRows.map((row) => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
@@ -186,13 +151,55 @@ export function DonorDonationsTable({
               ) : (
                 <TableRow>
                   <TableCell className="h-24 text-center text-muted-foreground" colSpan={columns.length}>
-                    No donations found.
+                    No completed donations found.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </div>
+
+        <div className="space-y-3 md:hidden">
+          {visibleRows.length ? (
+            visibleRows.map((row) => {
+              const donation = row.original
+
+              return (
+                <div className="rounded-xl border p-4" key={row.id}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{donation.foodName ?? "Unnamed donation"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {donation.category?.replaceAll("_", " ") ?? "Not provided"} · {donation.quantity ?? "?"} portions
+                      </p>
+                    </div>
+                    <StatusBadge status={donation.status} />
+                  </div>
+                  <div className="mt-4 space-y-2 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted-foreground">Completed</span>
+                      <span className="text-right">{formatDateTime(readOptionalString(donation, "completedAt"))}</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted-foreground">{counterpartyLabel}</span>
+                      <span className="text-right">{getCounterparty(donation)}</span>
+                    </div>
+                  </div>
+                  {donation.id ? (
+                    <Link className={cn(buttonVariants({ variant: "outline" }), "mt-4 w-full")} to="/donations/$id" params={{ id: donation.id }}>
+                      View Details
+                    </Link>
+                  ) : null}
+                </div>
+              )
+            })
+          ) : (
+            <div className="rounded-xl border py-10 text-center text-sm text-muted-foreground">
+              No completed donations found.
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
             Page {table.getState().pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
@@ -210,7 +217,3 @@ export function DonorDonationsTable({
     </Card>
   )
 }
-
-
-
-

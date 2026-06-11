@@ -16,8 +16,10 @@ import { Route as authLoginRouteImport } from './routes/(auth)/login.tsx'
 import { Route as appAboutRouteImport } from './routes/(app)/about.tsx'
 import { Route as appLayoutRouteImport } from './routes/(app)/_layout.tsx'
 import { Route as appNgoProfileRouteImport } from './routes/(app)/ngo/profile.tsx'
+import { Route as appNgoHistoryRouteImport } from './routes/(app)/ngo/history.tsx'
 import { Route as appNgoDashboardRouteImport } from './routes/(app)/ngo/dashboard.tsx'
 import { Route as appDonorProfileRouteImport } from './routes/(app)/donor/profile.tsx'
+import { Route as appDonorHistoryRouteImport } from './routes/(app)/donor/history.tsx'
 import { Route as appDonorDashboardRouteImport } from './routes/(app)/donor/dashboard.tsx'
 import { Route as appDonationsIdRouteImport } from './routes/(app)/donations/$id.tsx'
 import { Route as appDonorDonationsIndexRouteImport } from './routes/(app)/donor/donations/index.tsx'
@@ -60,6 +62,11 @@ const appNgoProfileRoute = appNgoProfileRouteImport.update({
   path: '/ngo/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const appNgoHistoryRoute = appNgoHistoryRouteImport.update({
+  id: '/(app)/ngo/history',
+  path: '/ngo/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const appNgoDashboardRoute = appNgoDashboardRouteImport.update({
   id: '/(app)/ngo/dashboard',
   path: '/ngo/dashboard',
@@ -68,6 +75,11 @@ const appNgoDashboardRoute = appNgoDashboardRouteImport.update({
 const appDonorProfileRoute = appDonorProfileRouteImport.update({
   id: '/(app)/donor/profile',
   path: '/donor/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const appDonorHistoryRoute = appDonorHistoryRouteImport.update({
+  id: '/(app)/donor/history',
+  path: '/donor/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const appDonorDashboardRoute = appDonorDashboardRouteImport.update({
@@ -115,8 +127,10 @@ export interface FileRoutesByFullPath {
   '/login/callback': typeof LoginCallbackRoute
   '/donations/$id': typeof appDonationsIdRoute
   '/donor/dashboard': typeof appDonorDashboardRoute
+  '/donor/history': typeof appDonorHistoryRoute
   '/donor/profile': typeof appDonorProfileRoute
   '/ngo/dashboard': typeof appNgoDashboardRoute
+  '/ngo/history': typeof appNgoHistoryRoute
   '/ngo/profile': typeof appNgoProfileRoute
   '/donor/donations/create': typeof appDonorDonationsCreateRoute
   '/ngo/donations/accepted': typeof appNgoDonationsAcceptedRoute
@@ -132,8 +146,10 @@ export interface FileRoutesByTo {
   '/login/callback': typeof LoginCallbackRoute
   '/donations/$id': typeof appDonationsIdRoute
   '/donor/dashboard': typeof appDonorDashboardRoute
+  '/donor/history': typeof appDonorHistoryRoute
   '/donor/profile': typeof appDonorProfileRoute
   '/ngo/dashboard': typeof appNgoDashboardRoute
+  '/ngo/history': typeof appNgoHistoryRoute
   '/ngo/profile': typeof appNgoProfileRoute
   '/donor/donations/create': typeof appDonorDonationsCreateRoute
   '/ngo/donations/accepted': typeof appNgoDonationsAcceptedRoute
@@ -151,8 +167,10 @@ export interface FileRoutesById {
   '/login/callback': typeof LoginCallbackRoute
   '/(app)/donations/$id': typeof appDonationsIdRoute
   '/(app)/donor/dashboard': typeof appDonorDashboardRoute
+  '/(app)/donor/history': typeof appDonorHistoryRoute
   '/(app)/donor/profile': typeof appDonorProfileRoute
   '/(app)/ngo/dashboard': typeof appNgoDashboardRoute
+  '/(app)/ngo/history': typeof appNgoHistoryRoute
   '/(app)/ngo/profile': typeof appNgoProfileRoute
   '/(app)/donor/donations/create': typeof appDonorDonationsCreateRoute
   '/(app)/ngo/donations/accepted': typeof appNgoDonationsAcceptedRoute
@@ -170,8 +188,10 @@ export interface FileRouteTypes {
     | '/login/callback'
     | '/donations/$id'
     | '/donor/dashboard'
+    | '/donor/history'
     | '/donor/profile'
     | '/ngo/dashboard'
+    | '/ngo/history'
     | '/ngo/profile'
     | '/donor/donations/create'
     | '/ngo/donations/accepted'
@@ -187,8 +207,10 @@ export interface FileRouteTypes {
     | '/login/callback'
     | '/donations/$id'
     | '/donor/dashboard'
+    | '/donor/history'
     | '/donor/profile'
     | '/ngo/dashboard'
+    | '/ngo/history'
     | '/ngo/profile'
     | '/donor/donations/create'
     | '/ngo/donations/accepted'
@@ -205,8 +227,10 @@ export interface FileRouteTypes {
     | '/login/callback'
     | '/(app)/donations/$id'
     | '/(app)/donor/dashboard'
+    | '/(app)/donor/history'
     | '/(app)/donor/profile'
     | '/(app)/ngo/dashboard'
+    | '/(app)/ngo/history'
     | '/(app)/ngo/profile'
     | '/(app)/donor/donations/create'
     | '/(app)/ngo/donations/accepted'
@@ -224,8 +248,10 @@ export interface RootRouteChildren {
   LoginCallbackRoute: typeof LoginCallbackRoute
   appDonationsIdRoute: typeof appDonationsIdRoute
   appDonorDashboardRoute: typeof appDonorDashboardRoute
+  appDonorHistoryRoute: typeof appDonorHistoryRoute
   appDonorProfileRoute: typeof appDonorProfileRoute
   appNgoDashboardRoute: typeof appNgoDashboardRoute
+  appNgoHistoryRoute: typeof appNgoHistoryRoute
   appNgoProfileRoute: typeof appNgoProfileRoute
   appDonorDonationsCreateRoute: typeof appDonorDonationsCreateRoute
   appNgoDonationsAcceptedRoute: typeof appNgoDonationsAcceptedRoute
@@ -285,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appNgoProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(app)/ngo/history': {
+      id: '/(app)/ngo/history'
+      path: '/ngo/history'
+      fullPath: '/ngo/history'
+      preLoaderRoute: typeof appNgoHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(app)/ngo/dashboard': {
       id: '/(app)/ngo/dashboard'
       path: '/ngo/dashboard'
@@ -297,6 +330,13 @@ declare module '@tanstack/react-router' {
       path: '/donor/profile'
       fullPath: '/donor/profile'
       preLoaderRoute: typeof appDonorProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(app)/donor/history': {
+      id: '/(app)/donor/history'
+      path: '/donor/history'
+      fullPath: '/donor/history'
+      preLoaderRoute: typeof appDonorHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(app)/donor/dashboard': {
@@ -360,8 +400,10 @@ const rootRouteChildren: RootRouteChildren = {
   LoginCallbackRoute: LoginCallbackRoute,
   appDonationsIdRoute: appDonationsIdRoute,
   appDonorDashboardRoute: appDonorDashboardRoute,
+  appDonorHistoryRoute: appDonorHistoryRoute,
   appDonorProfileRoute: appDonorProfileRoute,
   appNgoDashboardRoute: appNgoDashboardRoute,
+  appNgoHistoryRoute: appNgoHistoryRoute,
   appNgoProfileRoute: appNgoProfileRoute,
   appDonorDonationsCreateRoute: appDonorDonationsCreateRoute,
   appNgoDonationsAcceptedRoute: appNgoDonationsAcceptedRoute,
